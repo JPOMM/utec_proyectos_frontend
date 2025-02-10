@@ -10,17 +10,20 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # Checkout del repositorio
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # Configuración del entorno Node.js
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: 18
+          node-version: 22.11.0  # Actualiza a la versión deseada
 
-      # Instalar dependencias y construir el proyecto
+      - name: Check Node.js version
+        run: node -v  # Verifica la versión de Node.js
+
+      - name: Upgrade npm (opcional, si es necesario)
+        run: npm install -g npm@latest
+
       - name: Install dependencies
         run: npm install
 
