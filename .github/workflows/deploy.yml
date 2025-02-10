@@ -1,0 +1,73 @@
+name: Deploy Frontend to EKS
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checkout del repositorio
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # Configuración del entorno Node.js
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      # Instalar dependencias y construir el proyecto
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build project
+        run: npm run build
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: sa-east-1 # Especifica la región aquí
+
+      # Log in en Amazon ECR
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+
+      # Construcción y publicación de la imagen Docker
+      - name: Build and Push Docker image
+        run: |
+          IMAGE_TAG=${{ github.sha }}
+          REPOSITORY_URI=654654589924.dkr.ecr.eu-north-1.amazonaws.com/grupo01/frontend-web
+          docker build -t $REPOSITORY_URI:$IMAGE_TAG .
+          docker push $REPOSITORY_URI:$IMAGE_TAG
+
+      - name: Set dynamic image tag
+        id: ecr
+        run: echo "IMAGE_TAG=${{ github.sha }}" >> $GITHUB_ENV
+
+      # Configurar kubectl para EKS
+      - name: Configure kubectl for EKS
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: sa-east-1
+
+      - name: Update kubeconfig
+        run: |
+          aws eks update-kubeconfig --region sa-east-1 --name eg-g01-eks-grupo01-utec-b-cluster
+
+      # Despliegue en EKS
+      - name: Deploy to EKS
+        env:
+          IMAGE_TAG: ${{ env.IMAGE_TAG }}
+        run: |
+          sed -i "s|<IMAGE_TAG>|$IMAGE_TAG|g" k8s.yaml
+          kubectl apply -f k8s.yaml
+          kubectl rollout restart deployment/frontend-eks

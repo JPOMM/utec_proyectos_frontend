@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend-deployment
+  labels:
+    app: frontend-app
+spec:
+  replicas: 3  # Número de réplicas del pod
+  selector:
+    matchLabels:
+      app: frontend-app
+  template:
+    metadata:
+      labels:
+        app: frontend-app
+    spec:
+      containers:
+        - name: frontend-container
+          image: 654654589924.dkr.ecr.eu-north-1.amazonaws.com/grupo01/frontend-web:<IMAGE_TAG>  # Imagen Docker, el tag se reemplaza dinámicamente
+          ports:
+            - containerPort: 80
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "500m"
+            limits:
+              memory: "512Mi"
+              cpu: "1"
+          env:
+            - name: NODE_ENV
+              value: "production"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend-service
+  labels:
+    app: frontend-app
+spec:
+  type: LoadBalancer  # Expone la aplicación públicamente
+  ports:
+    - port: 80
+      targetPort: 80
+  selector:
+    app: frontend-app
