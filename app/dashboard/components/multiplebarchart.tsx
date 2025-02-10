@@ -17,6 +17,7 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart"
+import { ProyectoFueraPresupuesto } from "../_types"
 
 interface MultiplebarchartProps {
   data: ProyectoFueraPresupuesto[]
@@ -33,8 +34,8 @@ const chartConfig = {
   },
 } satisfies ChartConfig
 
-export function DashMultipleBarChart({ data }: MultiplebarchartProps) {
-  const chartData = data.map((item, index) => {
+export function Multiplebarchart({ data }: MultiplebarchartProps) {
+  const chartData = data.map((item) => {
     return item
   })
   return (

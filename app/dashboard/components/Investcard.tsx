@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/card"
 
 interface InvestcardProps {
-    data: string
+    data: number
 }
 
 export function Investcard({ data }: InvestcardProps) {

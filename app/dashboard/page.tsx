@@ -4,8 +4,8 @@ import {
   BreadcrumbItem,
   BreadcrumbLink,
   BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
+  // BreadcrumbPage,
+  // BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb"
 import { Separator } from "@/components/ui/separator"
 import {
@@ -14,8 +14,8 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar"
 // import { StackedChart } from "./components/stackedchart"
-import { DashPieChart } from "./components/piechart"
-import { DashMultipleBarChart } from "./components/Multiplebarchart"
+// import { DashPieChart } from "./components/piechart"
+import { Multiplebarchart } from "./components/multiplebarchart"
 import { Barchart } from "./components/Barchart"
 import { DatosInversion } from "./_types"
 import { Investcard } from "./components/Investcard"
@@ -52,7 +52,7 @@ export default async function Page() {
           <div className="grid gap-4 auto-rows-min md:grid-cols-3">
             <Barchart data={result.top5ProyectosPorInversion} />
             {/* <DashPieChart /> */}
-            <DashMultipleBarChart data={result.proyectosFueraDelPresupuesto} />
+            <Multiplebarchart data={result.proyectosFueraDelPresupuesto} />
             <Investcard data={result.promedioInversionPorProyecto} />
             {/* <div className="aspect-video rounded-xl bg-muted/50" /> */}
             {/* <div className="aspect-video rounded-xl bg-muted/50" /> */}

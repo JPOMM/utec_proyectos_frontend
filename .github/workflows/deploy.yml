@@ -1,76 +1,46 @@
-name: Deploy Frontend to EKS
+name: ci-cd pipeline deploy to AWS EC2
 
 on:
   push:
-    branches:
-      - master
-
+    branches: [ master ]
 jobs:
-  build-and-deploy:
+  deploy:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: 22.11.0  # Actualiza a la versión deseada
-
-      - name: Check Node.js version
-        run: node -v  # Verifica la versión de Node.js
-
-      - name: Upgrade npm (opcional, si es necesario)
-        run: npm install -g npm@latest
-
-      - name: Install dependencies
-        run: npm install
-
-      - name: Build project
-        run: npm run build
-
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v2
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: sa-east-1 # Especifica la región aquí
-
-      # Log in en Amazon ECR
-      - name: Login to Amazon ECR
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v1
-
-      # Construcción y publicación de la imagen Docker
-      - name: Build and Push Docker image
-        run: |
-          IMAGE_TAG=${{ github.sha }}
-          REPOSITORY_URI=654654589924.dkr.ecr.eu-north-1.amazonaws.com/grupo01/frontend-web
-          docker build -t $REPOSITORY_URI:$IMAGE_TAG .
-          docker push $REPOSITORY_URI:$IMAGE_TAG
-
-      - name: Set dynamic image tag
-        id: ecr
-        run: echo "IMAGE_TAG=${{ github.sha }}" >> $GITHUB_ENV
-
-      # Configurar kubectl para EKS
-      - name: Configure kubectl for EKS
-        uses: aws-actions/configure-aws-credentials@v2
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: sa-east-1
-
-      - name: Update kubeconfig
-        run: |
-          aws eks update-kubeconfig --region sa-east-1 --name eg-g01-eks-grupo01-utec-b-cluster
-
-      # Despliegue en EKS
-      - name: Deploy to EKS
-        env:
-          IMAGE_TAG: ${{ env.IMAGE_TAG }}
-        run: |
-          sed -i "s|<IMAGE_TAG>|$IMAGE_TAG|g" k8s.yaml
-          kubectl apply -f k8s.yaml
-          kubectl rollout restart deployment/frontend-eks
+    - name: Get Github action IP
+      id: ip
+      uses: haythem/public-ip@v1.2
+        
+    - name: Add Github Actions IP to Security group
+      run: |
+        aws ec2 authorize-security-group-ingress --group-name ${{ secrets.AWS_SG_NAME }} --protocol tcp --port 22 --cidr ${{ steps.ip.outputs.ipv4 }}/32    
+      env:
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
+        
+    - name: Deploy to prod server
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.HOST_IP }}
+        username: ubuntu
+        key: ${{ secrets.SSH_KEY }}
+        script: |
+          export NVM_DIR=~/.nvm
+          source ~/.nvm/nvm.sh
+          ls /home/ubuntu
+          cd /home/ubuntu/UTEC_PROYECTOS_FRONTEND
+          git stash
+          git pull origin master
+          npm install
+          npm run build
+          npm run dev
+              
+    - name: Remove Github Actions IP from security group
+      run: |
+        aws ec2 revoke-security-group-ingress --group-name ${{ secrets.AWS_SG_NAME }} --protocol tcp --port 22 --cidr ${{ steps.ip.outputs.ipv4 }}/32
+      env:
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
+      if: always()
