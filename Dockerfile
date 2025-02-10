@@ -18,7 +18,7 @@ FROM nginx:latest
 COPY --from=build /app/build /usr/share/nginx/html
 
 # Exponer el puerto 80
-EXPOSE 80
+EXPOSE 8080
 
 # Comando de inicio del contenedor
 ENTRYPOINT ["nginx", "-g", "daemon off;"]

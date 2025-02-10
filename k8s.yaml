@@ -19,16 +19,6 @@ spec:
           image: 654654589924.dkr.ecr.eu-north-1.amazonaws.com/grupo01/frontend-web:<IMAGE_TAG>  # Imagen Docker, el tag se reemplaza dinámicamente
           ports:
             - containerPort: 80
-          resources:
-            requests:
-              memory: "256Mi"
-              cpu: "500m"
-            limits:
-              memory: "512Mi"
-              cpu: "1"
-          env:
-            - name: NODE_ENV
-              value: "production"
 ---
 apiVersion: v1
 kind: Service
@@ -39,7 +29,8 @@ metadata:
 spec:
   type: LoadBalancer  # Expone la aplicación públicamente
   ports:
-    - port: 80
-      targetPort: 80
+    - protocol: TCP
+      port: 80
+      targetPort: 8080
   selector:
     app: frontend-app
