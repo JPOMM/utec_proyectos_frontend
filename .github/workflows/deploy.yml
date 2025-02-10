@@ -29,7 +29,7 @@ jobs:
           export NVM_DIR=~/.nvm
           source ~/.nvm/nvm.sh
           ls /home/ubuntu
-          cd /home/ubuntu/UTEC_PROYECTOS_FRONTEND
+          cd /home/ubuntu/utec_proyectos_frontend
           git stash
           git pull origin master
           npm install
